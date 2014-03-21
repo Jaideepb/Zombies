@@ -7,8 +7,9 @@
 #include<netdb.h>
 #include<errno.h>
 #include<stdio.h>
+#include<unistd.h>
 
-#define MYPORT "34603"
+#define MYPORT "34605"
 #define BACKLOG 10
 
 using namespace std;
@@ -38,15 +39,22 @@ int main() {
 		cout<<"Error: socket \n";
 		exit(1);
 	}
+	int yes=1;
+
+	if(setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) ==-1) {
+		perror("setsockopt");
+		exit(1);
+	}
 
 	bind(sockfd,res->ai_addr,res->ai_addrlen);
-	while(1) {	
+	while(1) {
 		listen(sockfd,BACKLOG);
 
 		infd = accept(sockfd,(struct sockaddr*)&inaddr,&addr_size);
 		cout<<"sock:"<<infd<<endl;
 
 		do {
+			sleep(5);
 			status = send(infd,"Hello\n",6,0);  
 			if(status!=-1)
 			{
@@ -58,7 +66,7 @@ int main() {
 					break;
 				}
 				else {
-					cout<<buff<<endl;
+					cout<<buff;
 					memset(&buff,'\0',256);
 				}
 			}

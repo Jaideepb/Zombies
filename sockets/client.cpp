@@ -8,8 +8,9 @@
 #include<errno.h>
 #include<stdio.h>
 #include<sstream>
+#include<unistd.h>
 
-#define PORT "34603"
+#define PORT "34605"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ int main() {
 		cout<<"Error: socket \n";
 		exit(1);
 	}
+
 	int count=0;
 	if(connect(sockfd,res->ai_addr,res->ai_addrlen)!=-1) {
 			
