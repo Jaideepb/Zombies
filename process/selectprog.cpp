@@ -15,7 +15,7 @@
 #define MYPORT "4345"
 using namespace std;
 
-int sockid;
+int sockid,highid;
 int clientfds[5];	
 fd_set readfds;
 struct sockaddr_storage inaddr;
@@ -39,10 +39,17 @@ void setnonblocking(int fd) {
 
 void ReceiveData(int idx) {
 	int fd=clientfds[idx];
+	int result;
 	char buff[256];
-	if(recv(fd,&buff,256,0)>0) {
-		cout<<buff;
-		send(fd,"Received!",9,0);
+	memset(buff,0,sizeof(buff));
+	if(recv(fd,buff,256,0)>0) {
+		cout<<buff<<endl;
+		if((result=send(fd,"Received",9,0))<=0) {
+			perror("send");
+		}
+		else {
+			cout<<"Sent!!"<<endl;
+		}
 		memset(buff,0,sizeof(buff));
 	}
 	else {
@@ -68,20 +75,38 @@ void ListenInConn(int num) {
 			}
 		}
 		
-		if(i==5)
+		if(i==5){
 			cout<<"Conn buff full"<<endl;
-		else 
-			ReceiveData(i);
+			close(fdtemp);
+		}
+			close(fdtemp);
+			clientfds[i]=0;
 	}
 	
 	//Check for data on existing connections
-	for(int i=0;i<5;i++) {
+/*	for(int i=0;i<5;i++) {
 		if(FD_ISSET(clientfds[i],&readfds)) {
+			cout<<"Socket "<<clientfds[i]<<" is set"<<endl;
 			ReceiveData(clientfds[i]);
 		}
 	}
+	*/
 }
 
+void SetSelectSocks(){
+	FD_ZERO(&readfds);	
+	FD_SET(sockid,&readfds);
+	cout<<"listening on "<<sockid;
+	for(int i=0;i<5;i++) {
+		if(clientfds[i]!=0) {
+			cout<<" "<<clientfds[i];
+			FD_SET(clientfds[i],&readfds);
+			if(clientfds[i]>highid)
+				highid=clientfds[i];
+		}
+	}
+	cout<<endl;
+}
 
 int main() {
 	struct timeval tv;
@@ -101,31 +126,29 @@ int main() {
 		cout<<result;
 	//	perror("getaddrinfo");
 	}
-	cout<<"Here"<<endl;
 	//socket(family,type,protocol)
 	if ((sockid=socket(res->ai_family,res->ai_socktype,res->ai_protocol))<0) {
 		perror("Socket");
 	}
-	cout<<sockid<<endl;
+	highid=sockid;
 	
 	int yes =1;
 	setsockopt(sockid,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int));
-	setnonblocking(sockid);
+//	setnonblocking(sockid);
 	setsockopt(sockid,IPPROTO_IPV6,IPV6_V6ONLY,(char *)&yes,sizeof(yes));
 	//bind(sockid,addrinfo.ai_addr,addrlen);
 	if(bind(sockid,res->ai_addr,res->ai_addrlen)<0){
 		perror("Bind");
 	}
+	listen(sockid,4);
 
 	while(1) {
-		FD_ZERO(&readfds);	
-		FD_SET(sockid,&readfds);
-
-		tv.tv_sec =4;
-		tv.tv_usec = 500000;
+		SetSelectSocks();
+		tv.tv_sec  = 10;
+		tv.tv_usec = 0;
 
 		result=0;
-		result = select(sockid+1,&readfds,NULL,(fd_set *) 0,&tv);
+		result = select(highid+1,&readfds,NULL,NULL,&tv);
 		cout<<"result= "<<result<<endl;
 		if(result<0) {
 			perror("select");
