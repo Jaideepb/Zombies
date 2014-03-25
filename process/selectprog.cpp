@@ -38,27 +38,34 @@ void setnonblocking(int fd) {
 }
 
 void ReceiveData(int idx) {
+//	cout<<"In Rcvdata :"<<idx<<".. ";
 	int fd=clientfds[idx];
 	int result;
 	char buff[256];
-	memset(buff,0,sizeof(buff));
+	memset(buff,'\0',sizeof(buff));
 	if(recv(fd,buff,256,0)>0) {
-		cout<<buff<<endl;
-		if((result=send(fd,"Received",9,0))<=0) {
+//		cout<<"data received .. ";
+		cout<<fd<<":"<<buff;
+	/*	if((result=send(fd,"Received",9,0))<=0) {
 			perror("send");
 		}
 		else {
 			cout<<"Sent!!"<<endl;
 		}
-		memset(buff,0,sizeof(buff));
+		*/
+		memset(buff,'\0',sizeof(buff));
 	}
 	else {
-		close(fd);
+//		cout<<"data not received .. ";
 		clientfds[idx]=0;
+		close(fd);
+//		cout<<"exiting else ..";
 	}
+//	cout<<"exiting rcvdata .."<<endl;
 }
 
 void ListenInConn(int num) {
+//	cout<<"Entering listeninconn .. ";
 	//Check for new connection
 	if(FD_ISSET(sockid,&readfds)) {
 		// accept(sockid,&inaddr,&addr_size);
@@ -67,6 +74,7 @@ void ListenInConn(int num) {
 			perror("accept ");
 			exit(-1);
 		}
+		setnonblocking(fdtemp);
 		int i;
 		for(i=0;i<5;i++) {
 			if(clientfds[i] == 0) {
@@ -79,33 +87,30 @@ void ListenInConn(int num) {
 			cout<<"Conn buff full"<<endl;
 			close(fdtemp);
 		}
-			close(fdtemp);
-			clientfds[i]=0;
 	}
 	
 	//Check for data on existing connections
-/*	for(int i=0;i<5;i++) {
+	for(int i=0;i<5;i++) {
 		if(FD_ISSET(clientfds[i],&readfds)) {
-			cout<<"Socket "<<clientfds[i]<<" is set"<<endl;
-			ReceiveData(clientfds[i]);
+//			cout<<"Socket "<<clientfds[i]<<" is set"<<endl;
+			ReceiveData(i);
 		}
 	}
-	*/
+//	cout<<"Exiting listeninconn .. "<<endl;
 }
 
 void SetSelectSocks(){
 	FD_ZERO(&readfds);	
 	FD_SET(sockid,&readfds);
-	cout<<"listening on "<<sockid;
+//	cout<<"listening on "<<sockid;
 	for(int i=0;i<5;i++) {
 		if(clientfds[i]!=0) {
-			cout<<" "<<clientfds[i];
+//			cout<<" "<<i<<":"<<clientfds[i];
 			FD_SET(clientfds[i],&readfds);
 			if(clientfds[i]>highid)
 				highid=clientfds[i];
 		}
 	}
-	cout<<endl;
 }
 
 int main() {
@@ -134,8 +139,8 @@ int main() {
 	
 	int yes =1;
 	setsockopt(sockid,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int));
-//	setnonblocking(sockid);
-	setsockopt(sockid,IPPROTO_IPV6,IPV6_V6ONLY,(char *)&yes,sizeof(yes));
+	setnonblocking(sockid);
+//	setsockopt(sockid,IPPROTO_IPV6,IPV6_V6ONLY,(char *)&yes,sizeof(yes));
 	//bind(sockid,addrinfo.ai_addr,addrlen);
 	if(bind(sockid,res->ai_addr,res->ai_addrlen)<0){
 		perror("Bind");
@@ -144,12 +149,13 @@ int main() {
 
 	while(1) {
 		SetSelectSocks();
-		tv.tv_sec  = 10;
-		tv.tv_usec = 0;
+		tv.tv_sec  = 2;
+		tv.tv_usec = 500000;
 
 		result=0;
-		result = select(highid+1,&readfds,NULL,NULL,&tv);
-		cout<<"result= "<<result<<endl;
+		cout<<"."<<endl;
+		//result = select(highid+1,&readfds,NULL,NULL,&tv);
+		result = select(highid+1,&readfds,NULL,NULL,NULL);
 		if(result<0) {
 			perror("select");
 		}
