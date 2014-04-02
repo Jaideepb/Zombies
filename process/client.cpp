@@ -57,7 +57,15 @@ int main() {
 
 	int count=0;
 	if(connect(sockfd,res->ai_addr,res->ai_addrlen)!=-1) {
-		//sleep(1);
+		sleep(6);
+		if(connect(sockfd,res->ai_addr,res->ai_addrlen)!=-1) {
+			cout<<"connect second"<<endl;
+		}
+		else {
+			perror("connect");
+			cout<<"failed second"<<endl;
+		}
+/*		//sleep(1);
 		recv(sockfd,&buff,256,0);
 		if(send(sockfd,"Hello",6,0)<0) {
 			perror("Send");

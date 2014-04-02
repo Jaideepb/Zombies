@@ -33,7 +33,7 @@ int main() {
 	
 	cout<<"client: sockid:"<<sockfd<<endl;
 
-	if(sockfd==-1) {
+	if(sockfd<0) {
 		cout<<"Error: socket \n";
 		exit(1);
 	}

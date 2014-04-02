@@ -68,6 +68,7 @@ void ListenInConn(int num) {
 //	cout<<"Entering listeninconn .. ";
 	//Check for new connection
 	if(FD_ISSET(sockid,&readfds)) {
+		cout<<"HERE\n";
 		// accept(sockid,&inaddr,&addr_size);
 		int fdtemp = accept(sockid,(struct sockaddr*)&inaddr,&addr_size);
 		if(fdtemp<0) {
@@ -152,8 +153,8 @@ int main() {
 		tv.tv_sec  = 2;
 		tv.tv_usec = 500000;
 
-		result=0;
-		cout<<"."<<endl;
+	//	result=0;
+		cout<<"."<<result<<endl;
 		//result = select(highid+1,&readfds,NULL,NULL,&tv);
 		result = select(highid+1,&readfds,NULL,NULL,NULL);
 		if(result<0) {
